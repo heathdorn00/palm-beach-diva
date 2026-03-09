@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Palm Beach Diva — Personal Styling by Lucie Burdova</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink:#e8648a; --pink-light:#f9d0de; --pink-pale:#fdf0f4;
+      --gold:#c9a84c; --cream:#faf7f2; --dark:#1a1410;
+      --text:#3d3028; --text-light:#7a6a60; --white:#ffffff;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Jost',sans-serif;font-weight:300;color:var(--text);background:var(--cream);overflow-x:hidden;}
+
+    /* ── QUIZ OVERLAY ── */
+    #quiz-overlay{position:fixed;inset:0;background:rgba(26,20,16,.78);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .5s ease;}
+    #quiz-overlay.hidden{display:none;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+    .quiz-modal{background:var(--white);border-radius:4px;max-width:620px;width:100%;max-height:92vh;overflow-y:auto;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);position:relative;}
+    .quiz-header{background:linear-gradient(135deg,var(--dark) 0%,#2e1f18 100%);padding:32px 40px 24px;text-align:center;position:relative;}
+    .quiz-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--gold);letter-spacing:.08em;}
+    .quiz-header h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-style:italic;font-weight:300;color:var(--white);margin-top:8px;line-height:1.2;}
+    .quiz-header p{color:rgba(255,255,255,.5);font-size:12px;letter-spacing:.08em;margin-top:8px;}
+    .quiz-x{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(255,255,255,.4);font-size:24px;cursor:pointer;line-height:1;transition:color .2s;}
+    .quiz-x:hover{color:rgba(255,255,255,.85);}
+    .quiz-bar-wrap{height:5px;background:var(--pink-light);}
+    .quiz-bar-fill{height:100%;background:linear-gradient(to right,var(--pink),var(--gold));transition:width .45s cubic-bezier(.4,0,.2,1);}
+    .quiz-step-lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-light);padding:11px 40px 0;font-weight:500;}
+    .quiz-body{padding:20px 40px 36px;}
+    .quiz-step{display:none;animation:slideUp .32s ease;}
+    .quiz-step.active{display:block;}
+    .quiz-q{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;color:var(--dark);margin:8px 0 7px;line-height:1.3;}
+    .quiz-hint{font-size:13px;color:var(--text-light);margin-bottom:18px;}
+    .quiz-opts{display:grid;gap:9px;}
+    .qopt{display:flex;align-items:center;gap:13px;padding:13px 16px;border:1.5px solid var(--pink-light);border-radius:4px;cursor:pointer;transition:all .2s;background:var(--white);}
+    .qopt:hover{border-color:var(--pink);background:var(--pink-pale);}
+    .qopt.sel{border-color:var(--pink);background:var(--pink-pale);}
+    .qopt.sel .qcircle{background:var(--pink);border-color:var(--pink);}
+    .qopt.sel .qcircle::after{display:block;}
+    .qopt.sel .qsq{background:var(--pink);border-color:var(--pink);}
+    .qopt.sel .qsq::after{display:block;}
+    .qcircle{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--pink-light);flex-shrink:0;position:relative;transition:all .2s;}
+    .qcircle::after{content:'';display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:var(--white);border-radius:50%;}
+    .qsq{width:20px;height:20px;border-radius:3px;border:1.5px solid var(--pink-light);flex-shrink:0;position:relative;transition:all .2s;}
+    .qsq::after{content:'✓';display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:var(--white);line-height:1;}
+    .ql{font-size:15px;font-weight:400;color:var(--text);}
+    .qd{font-size:12px;color:var(--text-light);margin-top:2px;}
+    .quiz-nav{display:flex;justify-content:flex-end;margin-top:22px;}
+    .qnext{background:var(--pink);color:var(--white);border:none;padding:13px 30px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:.12em;font-weight:500;cursor:pointer;border-radius:2px;transition:all .2s;text-transform:uppercase;}
+    .qnext:hover{background:#d45278;transform:translateY(-1px);}
+    .qnext:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+    /* text input in quiz */
+    .quiz-input{border:1.5px solid var(--pink-light);background:var(--white);padding:13px 16px;font-family:'Jost',sans-serif;font-size:15px;color:var(--text);border-radius:4px;outline:none;transition:border-color .2s;width:100%;}
+    .quiz-input:focus{border-color:var(--pink);}
+    .quiz-input-label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;display:block;}
+    /* result */
+    .qresult{text-align:center;}
+    .qresult-hi{font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--dark);margin-bottom:14px;}
+    .rbadge{display:flex;flex-direction:column;align-items:center;background:linear-gradient(135deg,var(--dark),#2e1f18);border-radius:4px;padding:24px 36px;margin-bottom:18px;}
+    .rbadge .rlabel{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;}
+    .rbadge .rtype{font-family:'Cormorant Garamond',serif;font-size:42px;font-style:italic;font-weight:300;color:var(--gold);line-height:1.1;}
+    .rbadge .rvibe{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:7px;}
+    .result-tips h4{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:12px;color:var(--dark);}
+    .tip-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px;text-align:left;}
+    .tip-card{background:var(--pink-pale);border-left:3px solid var(--pink);padding:11px 13px;border-radius:0 4px 4px 0;}
+    .tip-card strong{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--pink);display:block;margin-bottom:3px;}
+    .tip-card span{font-size:13px;color:var(--text);}
+    .qcta{background:linear-gradient(135deg,var(--pink),#c03a65);color:var(--white);border:none;padding:16px 36px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:.12em;font-weight:500;cursor:pointer;border-radius:2px;text-transform:uppercase;text-decoration:none;display:inline-block;transition:all .2s;}
+    .qcta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,100,138,.35);}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 48px;height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,247,242,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(201,168,76,.15);transition:box-shadow .3s;}
+    nav.scrolled{box-shadow:0 2px 24px rgba(0,0,0,.08);}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--dark);text-decoration:none;letter-spacing:.04em;}
+    .nav-logo span{color:var(--pink);font-style:italic;}
+    .nav-links{display:flex;list-style:none;gap:32px;}
+    .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);transition:color .2s;}
+    .nav-links a:hover{color:var(--pink);}
+    .nav-cta{background:var(--dark)!important;color:var(--white)!important;padding:10px 22px;border-radius:2px;}
+    .nav-cta:hover{background:var(--pink)!important;}
+    .nav-burger{display:none;background:none;border:none;cursor:pointer;}
+    .nav-burger span{display:block;width:24px;height:1.5px;background:var(--dark);margin:5px 0;}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:120px 24px 80px;background:var(--dark);}
+    .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(232,100,138,.18) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 20%,rgba(201,168,76,.12) 0%,transparent 60%);}
+    .sparkle{position:absolute;width:4px;height:4px;background:var(--gold);border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);opacity:0;}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.8;transform:scale(1.2)}}
+    .hero-eyebrow{font-size:11px;font-weight:500;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;opacity:0;animation:slideUp .8s .3s ease forwards;}
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,8vw,96px);font-weight:300;color:var(--white);line-height:1.05;margin-bottom:24px;opacity:0;animation:slideUp .8s .5s ease forwards;}
+    .hero h1 em{font-style:italic;color:var(--pink);}
+    .hero-sub{font-size:16px;color:rgba(255,255,255,.55);letter-spacing:.06em;margin-bottom:44px;opacity:0;animation:slideUp .8s .7s ease forwards;}
+    .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;opacity:0;animation:slideUp .8s .9s ease forwards;}
+    .btn-primary{background:var(--pink);color:var(--white);text-decoration:none;padding:16px 36px;font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;border-radius:2px;transition:all .25s;display:inline-block;}
+    .btn-primary:hover{background:#d45278;transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,100,138,.4);}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.8);text-decoration:none;padding:15px 36px;font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;border-radius:2px;border:1px solid rgba(255,255,255,.25);transition:all .25s;display:inline-block;cursor:pointer;font-family:'Jost',sans-serif;}
+    .btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+
+    /* ── ABOUT ── */
+    #about{padding:120px 48px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:center;}
+    .about-frame{aspect-ratio:4/5;background:linear-gradient(135deg,var(--dark) 0%,#2e1f18 100%);border-radius:4px;overflow:hidden;position:relative;}
+    .about-frame-inner{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(232,100,138,.2) 0%,transparent 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+    .about-initials{font-family:'Cormorant Garamond',serif;font-size:96px;font-style:italic;font-weight:300;color:rgba(255,255,255,.07);position:absolute;bottom:20px;right:20px;line-height:1;}
+    .about-visual{position:relative;}
+    .about-badge{position:absolute;bottom:-16px;left:-16px;background:var(--gold);color:var(--dark);padding:14px 20px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+    .about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--pink-light);border:1px solid var(--pink-light);margin-top:32px;border-radius:4px;overflow:hidden;}
+    .stat{background:var(--white);padding:20px 16px;text-align:center;}
+    .stat-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--pink);line-height:1;}
+    .stat-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);margin-top:6px;}
+    .eyebrow{font-size:11px;font-weight:500;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+    .eyebrow::after{content:'';flex:1;height:1px;background:var(--gold);max-width:40px;opacity:.4;}
+    .about-content h2{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,4vw,52px);font-weight:300;line-height:1.15;color:var(--dark);margin-bottom:24px;}
+    .about-content h2 em{font-style:italic;color:var(--pink);}
+    .about-content p{font-size:16px;line-height:1.8;color:var(--text-light);margin-bottom:18px;}
+    .about-content p strong{color:var(--text);font-weight:500;}
+    .cities{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;}
+    .city{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);padding:6px 14px;border:1px solid var(--pink-light);border-radius:99px;background:var(--white);}
+
+    /* ── QUIZ SECTION ── */
+    #quiz-section{background:linear-gradient(135deg,var(--dark) 0%,#2e1f18 100%);padding:100px 48px;text-align:center;position:relative;overflow:hidden;}
+    #quiz-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(232,100,138,.12) 0%,transparent 70%);}
+    #quiz-section .eyebrow{justify-content:center;color:var(--gold);}
+    #quiz-section .eyebrow::after{display:none;}
+    #quiz-section h2{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,60px);font-weight:300;color:var(--white);line-height:1.15;margin-bottom:16px;position:relative;}
+    #quiz-section h2 em{font-style:italic;color:var(--pink);}
+    #quiz-section>p{font-size:16px;color:rgba(255,255,255,.55);max-width:500px;margin:0 auto 44px;line-height:1.7;position:relative;}
+    .btn-quiz-open{background:linear-gradient(135deg,var(--pink),#c03a65);color:var(--white);border:none;padding:18px 48px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:.15em;font-weight:500;cursor:pointer;border-radius:2px;text-transform:uppercase;transition:all .25s;position:relative;}
+    .btn-quiz-open:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(232,100,138,.45);}
+    .quiz-features{display:flex;gap:40px;justify-content:center;margin-top:48px;flex-wrap:wrap;position:relative;}
+    .quiz-feature .icon{font-size:28px;margin-bottom:8px;}
+    .quiz-feature p{font-size:12px;letter-spacing:.08em;color:rgba(255,255,255,.45);text-transform:uppercase;}
+
+    /* ── SERVICES ── */
+    #services{padding:100px 48px;max-width:1200px;margin:0 auto;}
+    .sec-header{text-align:center;margin-bottom:64px;}
+    .sec-header h2{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,56px);font-weight:300;color:var(--dark);line-height:1.15;}
+    .sec-header h2 em{font-style:italic;color:var(--pink);}
+    .sec-header p{font-size:15px;color:var(--text-light);margin-top:14px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7;}
+    .services-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--pink-light);border:1px solid var(--pink-light);border-radius:4px;overflow:hidden;}
+    .scard{background:var(--white);padding:44px 40px;position:relative;transition:background .25s;}
+    .scard:hover{background:var(--pink-pale);}
+    .snum{font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:var(--pink-light);line-height:1;position:absolute;top:20px;right:30px;}
+    .scard h3{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--dark);margin-bottom:12px;}
+    .scard p{font-size:14px;color:var(--text-light);line-height:1.75;margin-bottom:24px;}
+    .sfoot{display:flex;align-items:center;justify-content:space-between;}
+    .sprice{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--pink);}
+    .btn-book{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dark);text-decoration:none;padding:8px 18px;border:1px solid var(--dark);border-radius:2px;transition:all .2s;}
+    .btn-book:hover{background:var(--dark);color:var(--white);}
+
+    /* ── HOW IT WORKS ── */
+    #experience{background:var(--pink-pale);padding:100px 48px;}
+    .hiw-inner{max-width:900px;margin:0 auto;}
+    .hiw-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px;position:relative;}
+    .hiw-steps::before{content:'';position:absolute;top:28px;left:calc(16.66% + 20px);right:calc(16.66% + 20px);height:1px;background:linear-gradient(to right,var(--pink),var(--gold),var(--pink));opacity:.3;}
+    .hiw-step{text-align:center;}
+    .step-circle{width:56px;height:56px;border-radius:50%;background:var(--dark);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+    .hiw-step h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--dark);margin-bottom:10px;}
+    .hiw-step p{font-size:14px;color:var(--text-light);line-height:1.7;}
+    .hiw-note{text-align:center;margin-top:52px;font-size:14px;color:var(--text-light);line-height:1.7;}
+    .hiw-note strong{color:var(--dark);font-weight:500;}
+
+    /* ── SHOP ── */
+    #shop{padding:100px 48px;max-width:1200px;margin:0 auto;}
+    .shop-box{background:var(--dark);border-radius:4px;padding:64px;text-align:center;position:relative;overflow:hidden;}
+    .shop-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(232,100,138,.15) 0%,transparent 70%);}
+    .shop-box h3{font-family:'Cormorant Garamond',serif;font-size:48px;font-style:italic;font-weight:300;color:var(--white);margin-bottom:14px;position:relative;}
+    .shop-box p{font-size:15px;color:rgba(255,255,255,.5);margin-bottom:36px;position:relative;}
+    .cat-pills{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;position:relative;margin-bottom:40px;}
+    .cat-pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);padding:10px 20px;border-radius:99px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;}
+
+    /* ── BOOKING ── */
+    #booking{background:var(--cream);padding:100px 48px;}
+    .booking-inner{max-width:640px;margin:0 auto;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .form-full{grid-column:1/-1;}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-group label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);}
+    .form-group input,.form-group select,.form-group textarea{border:1px solid var(--pink-light);background:var(--white);padding:13px 16px;font-family:'Jost',sans-serif;font-size:14px;color:var(--text);border-radius:2px;outline:none;transition:border-color .2s;width:100%;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--pink);}
+    .form-group textarea{resize:vertical;min-height:110px;}
+    .btn-submit{width:100%;background:var(--dark);color:var(--white);border:none;padding:17px;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;margin-top:8px;transition:background .2s;}
+    .btn-submit:hover{background:var(--pink);}
+    .form-success{display:none;text-align:center;padding:48px;background:var(--white);border-radius:4px;border:1px solid var(--pink-light);}
+    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic;font-weight:300;color:var(--dark);margin-bottom:12px;}
+    .form-success p{font-size:14px;color:var(--text-light);line-height:1.7;}
+
+    /* ── FOOTER ── */
+    footer{background:var(--dark);color:rgba(255,255,255,.5);padding:64px 48px 32px;}
+    .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:32px;}
+    .footer-brand .logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--white);margin-bottom:12px;display:block;}
+    .footer-brand .logo span{color:var(--pink);font-style:italic;}
+    .footer-brand p{font-size:13px;line-height:1.7;}
+    .footer-social{display:flex;gap:14px;margin-top:20px;}
+    .footer-social a{width:36px;height:36px;border:1px solid rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;text-decoration:none;transition:all .2s;}
+    .footer-social a:hover{background:var(--pink);border-color:var(--pink);}
+    .fcol h4{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+    .fcol ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .fcol ul a{text-decoration:none;font-size:13px;color:rgba(255,255,255,.5);transition:color .2s;}
+    .fcol ul a:hover{color:var(--white);}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      nav{padding:0 24px;} .nav-links{display:none;} .nav-burger{display:block;}
+      #about{grid-template-columns:1fr;padding:80px 24px;gap:48px;}
+      .services-grid{grid-template-columns:1fr;}
+      .hiw-steps{grid-template-columns:1fr;} .hiw-steps::before{display:none;}
+      #services,#experience,#shop,#booking{padding:80px 24px;}
+      #quiz-section{padding:80px 24px;}
+      .footer-top{grid-template-columns:1fr 1fr;}
+      .tip-grid{grid-template-columns:1fr;}
+      .form-grid{grid-template-columns:1fr;}
+      .quiz-body{padding:18px 24px 30px;}
+      .quiz-header{padding:28px 24px 20px;}
+      .quiz-step-lbl{padding:11px 24px 0;}
+    }
+    @media(max-width:580px){
+      .footer-top{grid-template-columns:1fr;} .footer-bottom{flex-direction:column;gap:10px;text-align:center;}
+      .hero-actions{flex-direction:column;align-items:center;}
+      .shop-box{padding:40px 24px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ QUIZ OVERLAY ═══════════════════════ -->
+<div id="quiz-overlay">
+  <div class="quiz-modal">
+    <div class="quiz-header">
+      <button class="quiz-x" onclick="closeQuiz()">×</button>
+      <div class="quiz-logo">Palm Beach Diva</div>
+      <h2>Your Personal<br><em>Style Profile</em></h2>
+      <p id="quiz-step-lbl-header">Step 1 of 7 · Free personalized recommendations</p>
+    </div>
+    <div class="quiz-bar-wrap"><div class="quiz-bar-fill" id="qbar" style="width:14.28%"></div></div>
+    <div class="quiz-step-lbl" id="qsteplbl">Step 1 of 7 — Get Started</div>
+
+    <div class="quiz-body">
+
+      <!-- Step 1: Name -->
+      <div class="quiz-step active" id="step-1">
+        <div class="quiz-q">Let's get started — what's your name?</div>
+        <div class="quiz-hint">Lucie will use this to personalize your style guide</div>
+        <div class="quiz-opts">
+          <label class="quiz-input-label">First Name</label>
+          <input class="quiz-input" type="text" id="q-name" placeholder="e.g. Sophia" oninput="toggleNextInput('qnext-1','q-name')" />
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-1" onclick="goStep(2)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 2: Age range -->
+      <div class="quiz-step" id="step-2">
+        <div class="quiz-q">What's your age range?</div>
+        <div class="quiz-hint">Style beautifully evolves at every stage of life</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="2" data-val="20s" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">20–29</div><div class="qd">Building your signature style</div></div>
+          </div>
+          <div class="qopt" data-step="2" data-val="30s" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">30–39</div><div class="qd">Confident, curated, intentional</div></div>
+          </div>
+          <div class="qopt" data-step="2" data-val="40s" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">40–49</div><div class="qd">Refined elegance at its peak</div></div>
+          </div>
+          <div class="qopt" data-step="2" data-val="50plus" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">50+</div><div class="qd">Timeless and utterly unapologetic</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-2" onclick="goStep(3)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 3: Body shape -->
+      <div class="quiz-step" id="step-3">
+        <div class="quiz-q">How would you describe your silhouette?</div>
+        <div class="quiz-hint">This is the foundation of Lucie's styling recommendations</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="3" data-val="A" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">⬛ Rectangle</div><div class="qd">Shoulders & hips similar width, straighter through the waist</div></div>
+          </div>
+          <div class="qopt" data-step="3" data-val="B" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">🔺 Inverted Triangle</div><div class="qd">Shoulders wider than hips — broader on top</div></div>
+          </div>
+          <div class="qopt" data-step="3" data-val="C" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">🍐 Pear / Triangle</div><div class="qd">Hips wider than shoulders — beautiful curves below</div></div>
+          </div>
+          <div class="qopt" data-step="3" data-val="D" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">⌛ Hourglass</div><div class="qd">Waist noticeably narrower — defined, balanced curves</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-3" onclick="goStep(4)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 4: Favourite feature -->
+      <div class="quiz-step" id="step-4">
+        <div class="quiz-q">Which part of your body do you love most?</div>
+        <div class="quiz-hint">Great styling is about celebrating what you already have</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="4" data-val="waist" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">My waist</div></div>
+          </div>
+          <div class="qopt" data-step="4" data-val="legs" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">My legs</div></div>
+          </div>
+          <div class="qopt" data-step="4" data-val="decolletage" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">My shoulders & décolletage</div></div>
+          </div>
+          <div class="qopt" data-step="4" data-val="all" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">All of the above — I own it 👑</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-4" onclick="goStep(5)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 5: Style vibe -->
+      <div class="quiz-step" id="step-5">
+        <div class="quiz-q">What's your Palm Beach style personality?</div>
+        <div class="quiz-hint">Pick the aesthetic that makes your heart skip</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="5" data-val="classic" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">Classic & Timeless</div><div class="qd">Chanel silhouettes, pearls, crisp whites, Worth Avenue elegance</div></div>
+          </div>
+          <div class="qopt" data-step="5" data-val="glam" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">Glam & Bold</div><div class="qd">Statement gold, sequins, turn every head in every room</div></div>
+          </div>
+          <div class="qopt" data-step="5" data-val="resort" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">Resort Casual Chic</div><div class="qd">Effortless, breezy, poolside-perfect all day long</div></div>
+          </div>
+          <div class="qopt" data-step="5" data-val="editorial" onclick="pickOne(this)">
+            <div class="qcircle"></div>
+            <div><div class="ql">Editorial & Fashion-Forward</div><div class="qd">Trends first, always a step ahead of the curve</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-5" onclick="goStep(6)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 6: Lifestyle (multi-select) -->
+      <div class="quiz-step" id="step-6">
+        <div class="quiz-q">Where does your wardrobe need to take you?</div>
+        <div class="quiz-hint">Select all that apply — there are no wrong answers</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="6" data-val="events" onclick="pickMulti(this,'qnext-6')">
+            <div class="qsq"></div><div><div class="ql">Galas, weddings & formal events</div></div>
+          </div>
+          <div class="qopt" data-step="6" data-val="business" onclick="pickMulti(this,'qnext-6')">
+            <div class="qsq"></div><div><div class="ql">Business & professional settings</div></div>
+          </div>
+          <div class="qopt" data-step="6" data-val="social" onclick="pickMulti(this,'qnext-6')">
+            <div class="qsq"></div><div><div class="ql">Brunches, dinners & social outings</div></div>
+          </div>
+          <div class="qopt" data-step="6" data-val="travel" onclick="pickMulti(this,'qnext-6')">
+            <div class="qsq"></div><div><div class="ql">Travel & vacation looks</div></div>
+          </div>
+          <div class="qopt" data-step="6" data-val="everyday" onclick="pickMulti(this,'qnext-6')">
+            <div class="qsq"></div><div><div class="ql">Elevated everyday / casual chic</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-6" onclick="goStep(7)" disabled>Next →</button></div>
+      </div>
+
+      <!-- Step 7: Challenge -->
+      <div class="quiz-step" id="step-7">
+        <div class="quiz-q">What's holding your style back right now?</div>
+        <div class="quiz-hint">This is where Lucie focuses her energy for you</div>
+        <div class="quiz-opts">
+          <div class="qopt" data-step="7" data-val="fit" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">Finding clothes that actually fit my body perfectly</div></div>
+          </div>
+          <div class="qopt" data-step="7" data-val="signature" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">Creating a cohesive, recognizable signature look</div></div>
+          </div>
+          <div class="qopt" data-step="7" data-val="occasions" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">Dressing for different occasions with confidence</div></div>
+          </div>
+          <div class="qopt" data-step="7" data-val="budget" onclick="pickOne(this)">
+            <div class="qcircle"></div><div><div class="ql">Achieving luxury looks without the luxury price tag</div></div>
+          </div>
+        </div>
+        <div class="quiz-nav"><button class="qnext" id="qnext-7" onclick="showResult()" disabled>See My Style Profile →</button></div>
+      </div>
+
+      <!-- Result -->
+      <div class="quiz-step qresult" id="step-result">
+        <div class="qresult-hi" id="result-hi"></div>
+        <div class="rbadge">
+          <div class="rlabel">Your Body Type</div>
+          <div class="rtype" id="rtype">Hourglass</div>
+          <div class="rvibe" id="rvibe"></div>
+        </div>
+        <div class="result-tips">
+          <h4 id="result-headline">Your personalized style guide</h4>
+          <div class="tip-grid" id="tip-grid"></div>
+        </div>
+        <a href="#booking" class="qcta" onclick="closeQuiz()">Book Your Styling Session with Lucie 👑</a>
+        <p style="margin-top:14px;font-size:12px;color:var(--text-light);">Or <button onclick="closeQuiz()" style="background:none;border:none;font-size:12px;color:var(--pink);cursor:pointer;text-decoration:underline;">explore the site first</button></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav id="main-nav">
+  <a href="#" class="nav-logo">PalmBeach<span>Diva</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#quiz-section">Style Quiz</a></li>
+    <li><a href="#shop">Shop</a></li>
+    <li><a href="#booking" class="nav-cta">Book Lucie</a></li>
+  </ul>
+  <button class="nav-burger" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div id="sparkles" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="hero-eyebrow">Personal Styling · Las Vegas &amp; Beyond</div>
+    <h1>Your Style,<br><em>Elevated.</em></h1>
+    <p class="hero-sub">Luxury personal styling by Lucie Burdova</p>
+    <div class="hero-actions">
+      <a href="#booking" class="btn-primary">Book a Consultation</a>
+      <button onclick="openQuiz()" class="btn-outline">Take the Style Quiz ✨</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ABOUT ═══════════════════════ -->
+<section id="about">
+  <div class="about-visual">
+    <div class="about-frame">
+      <div class="about-frame-inner">
+        <div style="font-size:72px;opacity:.6;">👑</div>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:rgba(255,255,255,.32);letter-spacing:.1em;">Lucie Burdova</p>
+      </div>
+      <div class="about-initials">LB</div>
+    </div>
+    <div class="about-badge">🌴 Based in Las Vegas</div>
+    <div class="about-stats">
+      <div class="stat"><div class="stat-num">90+</div><div class="stat-label">Countries</div></div>
+      <div class="stat"><div class="stat-num">20+</div><div class="stat-label">Years in Fashion</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Continents</div></div>
+    </div>
+  </div>
+  <div class="about-content">
+    <div class="eyebrow">Meet Lucie</div>
+    <h2>Your Best-Dressed Friend Who's Been <em>Everywhere</em></h2>
+    <p>
+      Born in <strong>Prague</strong>, shaped by years in <strong>Monte Carlo</strong>,
+      refined on the shores of <strong>Palm Beach</strong> — Lucie Burdova has spent
+      a lifetime inside the world's most stylish cities. With firsthand fashion
+      experience spanning 90+ countries and 4 continents, she brings a rare global
+      perspective to every styling session.
+    </p>
+    <p>
+      Lucie doesn't just dress women. She transforms how they carry themselves.
+      She's lived the Palm Beach season, walked Worth Avenue, dressed for Monte Carlo
+      galas and Italian summers. Now based in <strong>Las Vegas</strong>, she brings
+      that same world-class eye to women who deserve to look extraordinary every day —
+      not just on special occasions.
+    </p>
+    <p>
+      Whether you're preparing for a gala, refreshing a wardrobe that no longer feels
+      like <em>you</em>, or building a signature look from scratch — Lucie sees exactly
+      what you need. Her gift is bringing the diva out in every woman.
+    </p>
+    <div class="cities">
+      <span class="city">Prague</span>
+      <span class="city">Monte Carlo</span>
+      <span class="city">Palm Beach</span>
+      <span class="city">Boca Raton</span>
+      <span class="city">Las Vegas</span>
+      <span class="city">Italy</span>
+      <span class="city">90+ Countries</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ QUIZ CTA SECTION ═══════════════════════ -->
+<section id="quiz-section">
+  <div class="eyebrow">Free · Takes 3 Minutes</div>
+  <h2>Discover Your<br><em>Body Type &amp; Style DNA</em></h2>
+  <p>
+    Not sure what works for your body? Lucie's 7-step quiz identifies your shape,
+    your style personality, and gives you personalized recommendations — completely free.
+  </p>
+  <button class="btn-quiz-open" onclick="openQuiz()">Take the Style Quiz ✨</button>
+  <div class="quiz-features">
+    <div class="quiz-feature"><div class="icon">👗</div><p>Body Type Analysis</p></div>
+    <div class="quiz-feature"><div class="icon">✨</div><p>Style Personality</p></div>
+    <div class="quiz-feature"><div class="icon">👑</div><p>Personalized Tips</p></div>
+    <div class="quiz-feature"><div class="icon">🌴</div><p>Palm Beach Curated</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SERVICES ═══════════════════════ -->
+<section id="services">
+  <div class="sec-header">
+    <div class="eyebrow" style="justify-content:center;">The Diva Experience</div>
+    <h2>Services by <em>Lucie</em></h2>
+    <p>Every service is tailored to you — your body, your lifestyle, your goals. True style isn't about trends. It's about confidence.</p>
+  </div>
+  <div class="services-grid">
+    <div class="scard">
+      <div class="snum">01</div>
+      <h3>Virtual Style Consultation</h3>
+      <p>A 60-minute video session where Lucie reviews your wardrobe, identifies what works and what doesn't, and creates a personalized style direction — plus a curated shopping guide. Available worldwide.</p>
+      <div class="sfoot">
+        <div class="sprice">$150 <span style="font-size:14px;color:var(--text-light)">/session</span></div>
+        <a href="#booking" class="btn-book">Book Now</a>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="snum">02</div>
+      <h3>Closet Refresh</h3>
+      <p>Lucie comes to your home and transforms your wardrobe from the inside out. She'll reorganize, restyle, and reveal outfit combinations you never knew you had, then build your perfect shopping list. Las Vegas area.</p>
+      <div class="sfoot">
+        <div class="sprice">$250 <span style="font-size:14px;color:var(--text-light)">/visit</span></div>
+        <a href="#booking" class="btn-book">Book Now</a>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="snum">03</div>
+      <h3>Personal Shopping</h3>
+      <p>The ultimate style experience. Lucie takes you on a curated shopping journey through Las Vegas's best boutiques, outlets, and hidden gems. You shop. She styles. You leave feeling like a diva.</p>
+      <div class="sfoot">
+        <div class="sprice">$350 <span style="font-size:14px;color:var(--text-light)">/experience</span></div>
+        <a href="#booking" class="btn-book">Book Now</a>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="snum">04</div>
+      <h3>Event Styling</h3>
+      <p>Weddings, galas, red carpets, date nights, bachelorette parties — whatever the occasion, Lucie ensures you're the best-dressed woman in the room. Full-day styling includes hair &amp; makeup direction.</p>
+      <div class="sfoot">
+        <div class="sprice">$500 <span style="font-size:14px;color:var(--text-light)">/day</span></div>
+        <a href="#booking" class="btn-book">Book Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+<section id="experience">
+  <div class="hiw-inner">
+    <div class="sec-header">
+      <h2>Three Steps to <em>Your Best Look</em></h2>
+    </div>
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <div class="step-circle">01</div>
+        <h3>Consultation</h3>
+        <p>Fill out the booking form. Lucie will reach out within 24 hours to discuss your style goals, preferences, and occasion.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="step-circle">02</div>
+        <h3>Curation</h3>
+        <p>Lucie prepares a personalized plan — from color palettes to specific pieces — designed for your body, lifestyle, and budget.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="step-circle">03</div>
+        <h3>Transformation</h3>
+        <p>Virtual or in person, you'll walk away with a wardrobe that makes you feel like the most confident woman in any room.</p>
+      </div>
+    </div>
+    <div class="hiw-note">
+      Based in <strong>Las Vegas</strong> · Available in <strong>Miami</strong>, <strong>Palm Beach</strong>, <strong>New York</strong> &amp; wherever life takes her.<br>
+      Follow <a href="https://www.tiktok.com/@lucieburdovaofficial" style="color:var(--pink);text-decoration:none;">@lucieburdovaofficial</a> on TikTok for daily style inspiration.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SHOP ═══════════════════════ -->
+<section id="shop">
+  <div class="sec-header">
+    <div class="eyebrow" style="justify-content:center;">The Collection</div>
+    <h2>The World of <em>Palm Beach Diva</em></h2>
+  </div>
+  <div class="shop-box">
+    <h3>Coming Soon</h3>
+    <p>Signature hats, resort wear, and accessories designed for women who live beautifully. Follow us to be the first to shop.</p>
+    <div class="cat-pills">
+      <div class="cat-pill">👒 Hats</div>
+      <div class="cat-pill">👗 Dresses</div>
+      <div class="cat-pill">💎 Jewelry</div>
+      <div class="cat-pill">👛 Accessories</div>
+    </div>
+    <a href="https://www.tiktok.com/@lucieburdovaofficial" target="_blank" class="btn-primary" style="position:relative;">Follow on TikTok</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════ BOOKING ═══════════════════════ -->
+<section id="booking">
+  <div class="booking-inner">
+    <div class="sec-header">
+      <div class="eyebrow" style="justify-content:center;">Ready to Begin?</div>
+      <h2>Book <em>Lucie</em></h2>
+      <p>Tell Lucie about yourself and your style goals. She'll respond within 24 hours with a personalized plan.</p>
+    </div>
+    <form id="booking-form" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_KEY_HERE" />
+      <input type="hidden" name="subject" value="New Booking Request — Palm Beach Diva" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" name="name" placeholder="First &amp; Last Name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" name="phone" placeholder="+1 (000) 000-0000" />
+        </div>
+        <div class="form-group">
+          <label>Your Location</label>
+          <input type="text" name="location" placeholder="City, State" />
+        </div>
+        <div class="form-group form-full">
+          <label>Service Interested In</label>
+          <select name="service" required>
+            <option value="" disabled selected>Select a service</option>
+            <option>Virtual Style Consultation — $150</option>
+            <option>In-Person Closet Refresh — $250</option>
+            <option>Personal Shopping Experience — $350</option>
+            <option>Event Styling — $500/day</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label>Tell Me About Your Style Goals</label>
+          <textarea name="message" placeholder="What's your biggest style challenge? Any upcoming events?"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Send Request to Lucie ✨</button>
+    </form>
+    <div class="form-success" id="form-success">
+      <div style="font-size:48px;margin-bottom:16px;">👑</div>
+      <h3>Request Received!</h3>
+      <p>Lucie will review your request and reach out within 24 hours. Follow <a href="https://www.tiktok.com/@lucieburdovaofficial" style="color:var(--pink)">@lucieburdovaofficial</a> for daily style inspiration.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <span class="logo">PalmBeach<span>Diva</span></span>
+      <p>Luxury personal styling for women who refuse to blend in. Based in Las Vegas. Available worldwide.</p>
+      <div class="footer-social">
+        <a href="https://www.tiktok.com/@lucieburdovaofficial" target="_blank">𝕋</a>
+        <a href="https://www.instagram.com/lucieburdovaofficial/" target="_blank">📷</a>
+      </div>
+    </div>
+    <div class="fcol">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#services">Virtual Styling</a></li>
+        <li><a href="#services">Closet Refresh</a></li>
+        <li><a href="#services">Personal Shopping</a></li>
+        <li><a href="#services">Event Styling</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#about">About Lucie</a></li>
+        <li><a href="#quiz-section">Style Quiz</a></li>
+        <li><a href="#shop">The Collection</a></li>
+        <li><a href="#booking">Book Now</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="mailto:hello@palmbeachdiva.com">hello@palmbeachdiva.com</a></li>
+        <li><a href="#booking">Booking Inquiry</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Palm Beach Diva. All Rights Reserved.</span>
+    <span>Personal Styling by Lucie Burdova</span>
+  </div>
+</footer>
+
+<script>
+// ── RESULT DATA ──
+var RESULTS = {
+  A: {
+    type:'Rectangle',
+    headline:'You\'re built for bold shapes & structure',
+    tips:[
+      {label:'Best silhouettes',text:'Wrap dresses, belted styles, peplum tops'},
+      {label:'Palm Beach picks',text:'Cinched resort wear, statement belts'},
+      {label:'Hat recommendation',text:'Wide-brim boater — adds curves visually'},
+      {label:'Lucie\'s tip',text:'A great belt is your best friend — it creates the waist'}
+    ]
+  },
+  B:{
+    type:'Inverted Triangle',
+    headline:'Draw the eye down — embrace your power silhouette',
+    tips:[
+      {label:'Best silhouettes',text:'A-line skirts, wide-leg pants, flowy minis'},
+      {label:'Palm Beach picks',text:'Printed bottoms, structured midi skirts'},
+      {label:'Hat recommendation',text:'Pink performance cap — balances your strong shoulders'},
+      {label:'Lucie\'s tip',text:'Bold patterns and color below the waist are your secret weapon'}
+    ]
+  },
+  C:{
+    type:'Pear / Triangle',
+    headline:'Celebrate your curves with perfectly balanced styling',
+    tips:[
+      {label:'Best silhouettes',text:'Off-shoulder tops, A-line, empire waist'},
+      {label:'Palm Beach picks',text:'Bold prints on top, solid resort bottoms'},
+      {label:'Hat recommendation',text:'Straw boater with a ribbon — draws eyes upward'},
+      {label:'Lucie\'s tip',text:'Bright colors & embellishments on top create beautiful balance'}
+    ]
+  },
+  D:{
+    type:'Hourglass',
+    headline:'You\'re the ultimate diva silhouette — own every inch',
+    tips:[
+      {label:'Best silhouettes',text:'Bodycon, wrap dresses, fitted everything'},
+      {label:'Palm Beach picks',text:'Matching sets, belted maxi dresses'},
+      {label:'Hat recommendation',text:'Any — you make every hat look iconic 👑'},
+      {label:'Lucie\'s tip',text:'Fitted clothing is made for you — never hide your shape'}
+    ]
+  }
+};
+
+var VIBES = {classic:'Classic & Timeless',glam:'Glam & Bold',resort:'Resort Casual Chic',editorial:'Editorial & Fashion-Forward'};
+var STEP_LABELS = ['Get Started','Your Age','Your Silhouette','Favourite Feature','Your Vibe','Your Lifestyle','Your Challenge'];
+
+var answers = {};
+var cur = 1;
+var TOTAL = 7;
+
+function updateBar(step){
+  var pct = (step/TOTAL)*100;
+  document.getElementById('qbar').style.width = pct+'%';
+  document.getElementById('qsteplbl').textContent = 'Step '+step+' of '+TOTAL+' — '+STEP_LABELS[step-1];
+  document.getElementById('quiz-step-lbl-header').textContent = 'Step '+step+' of '+TOTAL+' · Free personalized recommendations';
+}
+
+function goStep(n){
+  document.getElementById('step-'+cur).classList.remove('active');
+  cur = n;
+  document.getElementById('step-'+cur).classList.add('active');
+  updateBar(cur);
+  document.querySelector('.quiz-modal').scrollTop = 0;
+}
+
+function toggleNextInput(btnId, inputId){
+  var v = document.getElementById(inputId).value.trim();
+  document.getElementById(btnId).disabled = v.length === 0;
+  if(v) answers['name'] = v;
+}
+
+function pickOne(el){
+  var step = el.dataset.step;
+  document.querySelectorAll('[data-step="'+step+'"]').forEach(function(o){o.classList.remove('sel');});
+  el.classList.add('sel');
+  answers['s'+step] = el.dataset.val;
+  document.getElementById('qnext-'+step).disabled = false;
+}
+
+function pickMulti(el, btnId){
+  el.classList.toggle('sel');
+  var anySelected = document.querySelectorAll('[data-step="6"].sel').length > 0;
+  document.getElementById(btnId).disabled = !anySelected;
+}
+
+function showResult(){
+  document.getElementById('step-7').classList.remove('active');
+  cur = 8;
+  updateBar(TOTAL);
+
+  var name = answers['name'] || '';
+  var bodyKey = answers['s3'] || 'D';
+  var vibeKey = answers['s5'] || 'glam';
+  var r = RESULTS[bodyKey];
+
+  document.getElementById('result-hi').textContent = name ? 'Welcome, '+name+'. Here\'s your profile.' : 'Here\'s your personalized style profile.';
+  document.getElementById('rtype').textContent = r.type;
+  document.getElementById('rvibe').textContent = VIBES[vibeKey] || '';
+  document.getElementById('result-headline').textContent = r.headline;
+  document.getElementById('tip-grid').innerHTML = r.tips.map(function(t){
+    return '<div class="tip-card"><strong>'+t.label+'</strong><span>'+t.text+'</span></div>';
+  }).join('');
+
+  document.getElementById('step-result').classList.add('active');
+  document.getElementById('qsteplbl').textContent = 'Your Style Profile';
+  document.getElementById('quiz-step-lbl-header').textContent = 'Your personalized Palm Beach Diva results';
+  document.getElementById('qbar').style.width = '100%';
+}
+
+function openQuiz(){
+  document.getElementById('quiz-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeQuiz(){
+  document.getElementById('quiz-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  sessionStorage.setItem('quizSeen','1');
+}
+
+window.addEventListener('load', function(){
+  if(!sessionStorage.getItem('quizSeen')) setTimeout(openQuiz, 1800);
+});
+
+// Nav scroll
+window.addEventListener('scroll', function(){
+  document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// Mobile nav
+function toggleNav(){
+  var links = document.querySelector('.nav-links');
+  links.style.display = (links.style.display==='flex')?'none':'flex';
+  if(links.style.display==='flex'){
+    links.style.cssText='display:flex;flex-direction:column;position:absolute;top:72px;left:0;right:0;background:var(--cream);padding:20px 24px 24px;border-bottom:1px solid var(--pink-light);gap:16px;z-index:200;';
+  }
+}
+
+// Sparkles
+var sc = document.getElementById('sparkles');
+for(var i=0;i<18;i++){
+  var s=document.createElement('div');
+  s.className='sparkle';
+  s.style.cssText='left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;--d:'+(2+Math.random()*4)+'s;--delay:'+(Math.random()*4)+'s;';
+  sc.appendChild(s);
+}
+
+// Form
+document.getElementById('booking-form').addEventListener('submit',async function(e){
+  e.preventDefault();
+  var f=e.target;
+  try{
+    var r=await fetch(f.action,{method:'POST',body:new FormData(f)});
+    var j=await r.json();
+    if(j.success){f.style.display='none';document.getElementById('form-success').style.display='block';}
+  }catch(err){f.submit();}
+});
+</script>
+</body>
+</html>
